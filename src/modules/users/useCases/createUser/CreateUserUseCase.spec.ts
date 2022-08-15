@@ -26,7 +26,8 @@ describe("Create User", () => {
 
   it("Should not be able to create a user if email already in use", async () => {
     await createUserUseCase.execute(user);
-    expect(async () => createUserUseCase.execute(user)).rejects.toBeInstanceOf(
+    const promise = createUserUseCase.execute(user)
+    await expect(promise).rejects.toBeInstanceOf(
       CreateUserError
     );
   });

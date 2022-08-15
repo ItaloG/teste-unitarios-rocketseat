@@ -2,6 +2,7 @@ import { InMemoryUsersRepository } from "../../../users/repositories/in-memory/I
 import { CreateUserUseCase } from "../../../users/useCases/createUser/CreateUserUseCase";
 import { ICreateUserDTO } from "../../../users/useCases/createUser/ICreateUserDTO";
 import { InMemoryStatementsRepository } from "../../repositories/in-memory/InMemoryStatementsRepository";
+import { CreateStatementError } from "./CreateStatementError";
 import { CreateStatementUseCase } from "./CreateStatementUseCase";
 import { ICreateStatementDTO } from "./ICreateStatementDTO";
 
@@ -53,7 +54,33 @@ describe("Create Statement", () => {
     expect(statement).toHaveProperty("id");
   });
 
-  it('Should ', async () => {
-    
+  it("Should be able to create withdraw statement", async () => {
+    const result = await createUserUseCase.execute(user);
+    await createStatementUseCase.execute(
+      defaultStatement("deposit" as OperationType, <string>result.id)
+    );
+    const statement = await createStatementUseCase.execute(
+      defaultStatement("withdraw" as OperationType, <string>result.id)
+    );
+
+    expect(statement).toHaveProperty("id");
+    expect(statement.amount).toEqual(10);
+  });
+
+  it("Should not be able to create statement with invalid user id", async () => {
+    const promise = createStatementUseCase.execute(
+      defaultStatement("deposit" as OperationType, "invalid_id")
+    );
+
+    await expect(promise).rejects.toBeInstanceOf(CreateStatementError.UserNotFound)
+  });
+
+  it('Should not be able to create withdraw statement with insufficient funds', async () => {
+    const result = await createUserUseCase.execute(user);
+    const promise = createStatementUseCase.execute(
+      defaultStatement("withdraw" as OperationType, <string>result.id)
+    );
+
+    await expect(promise).rejects.toBeInstanceOf(CreateStatementError.InsufficientFunds)
   });
 });
